@@ -1,0 +1,267 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// NextAuth.js Required Models
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Buzzbrand Domain Models
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  memberships   Membership[]
+  auditLogs     AuditLog[]
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memberships Membership[]
+  projects    Project[]
+  mentions    Mention[]
+  jobRuns     JobRun[]
+  auditLogs   AuditLog[]
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           String       @default("MEMBER") // OWNER, ADMIN, MEMBER
+  createdAt      DateTime     @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+}
+
+model Project {
+  id               String   @id @default(cuid())
+  organizationId   String
+  name             String
+  description      String?
+  status           String   @default("active") // active, inactive
+  scanFrequency    String   @default("daily")
+  deliveryTime     String   @default("08:00")
+  timezone         String   @default("Europe/Madrid")
+  sendEmptyReports Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  keywords         Keyword[]
+  sourceSites      SourceSite[]
+  mentions         Mention[]
+  emailRecipients  EmailRecipient[]
+  emailReports     EmailReport[]
+  jobRuns          JobRun[]
+}
+
+model Keyword {
+  id             String   @id @default(cuid())
+  projectId      String
+  term           String
+  matchType      String   @default("contains") // exact_match, contains, phrase, regex
+  isActive       Boolean  @default(true)
+  caseSensitive  Boolean  @default(false)
+  ignoreAccents  Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  mentions       Mention[]
+}
+
+model SourceSite {
+  id             String   @id @default(cuid())
+  projectId      String
+  name           String
+  baseUrl        String
+  rssUrl         String?
+  mode           String   @default("auto") // rss, html, auto
+  status         String   @default("active") // active, inactive, error
+  lastScanAt     DateTime?
+  lastHttpStatus Int?
+  lastError      String?
+  maxUrlsPerScan Int      @default(50)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sections       SourceSection[]
+  crawledUrls    CrawledUrl[]
+  mentions       Mention[]
+}
+
+model SourceSection {
+  id           String   @id @default(cuid())
+  sourceSiteId String
+  url          String
+  label        String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  sourceSite   SourceSite @relation(fields: [sourceSiteId], references: [id], onDelete: Cascade)
+}
+
+model CrawledUrl {
+  id            String   @id @default(cuid())
+  sourceSiteId  String
+  url           String
+  urlHash       String
+  contentHash   String?
+  title         String?
+  firstSeenAt   DateTime @default(now())
+  lastSeenAt    DateTime @default(now())
+  lastScannedAt DateTime?
+  httpStatus    Int?
+
+  sourceSite    SourceSite @relation(fields: [sourceSiteId], references: [id], onDelete: Cascade)
+  mentions      Mention[]
+
+  @@unique([sourceSiteId, urlHash])
+}
+
+model Mention {
+  id                 String   @id @default(cuid())
+  organizationId     String
+  projectId          String
+  sourceSiteId       String
+  crawledUrlId       String
+  keywordId          String
+  url                String
+  title              String
+  snippet            String   @db.Text
+  matchedText        String
+  detectedAt         DateTime @default(now())
+  articlePublishedAt DateTime?
+  sentAt             DateTime?
+  reviewedAt         DateTime?
+
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project            Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sourceSite         SourceSite   @relation(fields: [sourceSiteId], references: [id], onDelete: Cascade)
+  crawledUrl         CrawledUrl   @relation(fields: [crawledUrlId], references: [id], onDelete: Cascade)
+  keyword            Keyword      @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+  emailReportMentions EmailReportMention[]
+}
+
+model EmailRecipient {
+  id          String   @id @default(cuid())
+  projectId   String
+  email       String
+  name        String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model EmailReport {
+  id              String   @id @default(cuid())
+  projectId       String
+  subject         String
+  recipientEmails String[]
+  status          String   @default("sent") // queued, sent, failed
+  sentAt          DateTime?
+  error           String?  @db.Text
+  mentionsCount   Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  project         Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  mentions        EmailReportMention[]
+}
+
+model EmailReportMention {
+  id            String   @id @default(cuid())
+  emailReportId String
+  mentionId     String
+
+  emailReport   EmailReport @relation(fields: [emailReportId], references: [id], onDelete: Cascade)
+  mention       Mention     @relation(fields: [mentionId], references: [id], onDelete: Cascade)
+
+  @@unique([emailReportId, mentionId])
+}
+
+model JobRun {
+  id             String   @id @default(cuid())
+  organizationId String
+  projectId      String
+  type           String   // scrape, email
+  status         String   // queued, running, completed, failed
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  durationMs     Int?
+  logs           String?  @db.Text
+  error          String?  @db.Text
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  action         String
+  entity         String
+  entityId       String
+  metadata       String?  @db.Text // JSON string
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
