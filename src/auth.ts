@@ -9,6 +9,7 @@ import { z } from "zod"
 // src/lib/prisma.ts
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
