@@ -2,7 +2,7 @@
 
 import { z } from "zod"
 import prisma from "@/lib/prisma"
-import bcrypt from "bcrypt"
+import bcrypt from "bcryptjs"
 
 const registerSchema = z.object({
   email: z.string().email(),
