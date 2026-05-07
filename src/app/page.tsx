@@ -7,7 +7,7 @@ export default function Home() {
       <header className="border-b border-border bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center">
-            <span className="font-heading text-2xl font-bold tracking-tight">Buzzbrand</span>
+            <span className="font-heading text-2xl font-bold tracking-tight">buzzbrand</span>
           </div>
           <nav className="flex items-center space-x-4">
             <Link href="/login" className="text-sm font-medium hover:text-muted-foreground transition-colors">
@@ -76,7 +76,7 @@ export default function Home() {
             <div>
               <h2 className="font-heading text-4xl font-bold mb-6">Sin costes de IA ocultos</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Buzzbrand utiliza un motor de búsqueda local robusto basado en normalización de texto y expresiones regulares. No necesitas pagar por tokens de IA para saber si hablan de ti.
+                buzzbrand utiliza un motor de búsqueda local robusto basado en normalización de texto y expresiones regulares. No necesitas pagar por tokens de IA para saber si hablan de ti.
               </p>
             </div>
             <div>
@@ -91,7 +91,7 @@ export default function Home() {
 
       <footer className="border-t border-border bg-card py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="font-heading text-xl font-bold">Buzzbrand</div>
+          <div className="font-heading text-xl font-bold">buzzbrand</div>
           <div className="text-sm text-muted-foreground font-mono">
             © {new Date().getFullYear()} Todos los derechos reservados.
           </div>

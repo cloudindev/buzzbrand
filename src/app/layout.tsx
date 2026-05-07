@@ -18,7 +18,7 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Buzzbrand | Clipping de Medios Inteligente",
+  title: "buzzbrand | Clipping de Medios Inteligente",
   description: "Un clipping diario, limpio y accionable, directamente en tu email.",
 };
 
