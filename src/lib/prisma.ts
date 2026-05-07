@@ -9,7 +9,9 @@ const dummyProxy = new Proxy({}, {
   }
 });
 
-export const prisma = process.env.DATABASE_URL
+const isRealDb = typeof process.env.DATABASE_URL === 'string' && process.env.DATABASE_URL.startsWith("postgres");
+
+export const prisma = isRealDb
   ? (globalForPrisma.prisma || new PrismaClient())
   : (dummyProxy as unknown as PrismaClient);
 
